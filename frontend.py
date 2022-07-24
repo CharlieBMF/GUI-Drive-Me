@@ -8,13 +8,7 @@ import backend
 
 def confirm_calendar_day():
     result = backend.check_calendar_day(cal.selection_get())
-    if result:
-        car_karol = result[2]
-        car_pioter = result[3]
-    else:
-        car_karol = 'No data'
-        car_pioter = 'No data'
-    show_day_info(car_karol, car_pioter)
+    show_day_info(result['car_karol'], result['car_pioter'])
 
 
 def show_day_info(car_karol='No info', car_pioter='No info'):
@@ -24,8 +18,9 @@ def show_day_info(car_karol='No info', car_pioter='No info'):
     karol_car_chose_button.config(text=f'Karol drove this car on {cal.selection_get()}')
     pioter_car_chose_button.config(text=f'Pioter drove this car on {cal.selection_get()}')
 
+
 def karol_ride_info_insert():
-    print(var1.get())
+    backend.karol_insert_ride_info(var1.get())
 
 
 def pioter_ride_info_insert():
