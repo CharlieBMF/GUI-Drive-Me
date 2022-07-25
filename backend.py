@@ -1,6 +1,5 @@
 import sqlite3
 import functools
-import datetime
 
 CARS_DICTIONARY = {
     1: 'Clio',
@@ -20,6 +19,7 @@ CARS_PIOTER = [
     'Clio',
     'Yamaha'
 ]
+
 
 def initial_connect():
     conn = sqlite3.connect('rides')
@@ -42,9 +42,8 @@ def connect_wrapper(func):
 
 @connect_wrapper
 def check_calendar_day(cur, day):
-    cur.execute(f"SELECT * FROM rides WHERE date={day}")
+    cur.execute("SELECT * FROM rides WHERE date=?", (day,))
     results = cur.fetchone()
-    print(results)
     if results:
         car_karol = results[2]
         car_pioter = results[3]
@@ -52,14 +51,24 @@ def check_calendar_day(cur, day):
         car_karol = 'No data'
         car_pioter = 'No data'
     return {'car_karol': car_karol, 'car_pioter': car_pioter}
-    # cur.execute("INSERT INTO rides( date, Karol, Pioter) VALUES (?,?,?)", (day, 'Tojka', 'Clio'))
-    # z = cur.execute('SELECT * FROM rides')
-    # s = z.fetchall()
-    # print(s)
 
-# @connect_wrapper
-# def karol_insert_ride_info(cur, car):
-#     cur.execute('INSERT INTO rides')
+
+@connect_wrapper
+def insert_ride_info(cur, day, car, driver):
+    if car:
+        cur.execute("SELECT * FROM rides WHERE date=?", (day,))
+        data_exist = cur.fetchall()
+        if driver == 'Karol':
+            if data_exist:
+                cur.execute("UPDATE rides SET Karol=? WHERE date=?", (CARS_DICTIONARY[car], day))
+            else:
+                cur.execute("INSERT INTO rides(date, Karol) Values (?,?)", (day, CARS_DICTIONARY[car]))
+        if driver == 'Pioter':
+            if data_exist:
+                cur.execute("UPDATE rides SET Pioter=? WHERE date=?", (CARS_DICTIONARY[car], day))
+            else:
+                cur.execute("INSERT INTO rides(date, Pioter) Values (?,?)", (day, CARS_DICTIONARY[car]))
+        cur.execute("SELECT * FROM rides WHERE date=?", (day,))
 
 
 @connect_wrapper
@@ -67,20 +76,26 @@ def calculate_drives(cur):
     cur.execute('SELECT * FROM rides WHERE Karol NOT NULL AND Pioter NOT NULL')
     all_rides = cur.fetchall()
     cur.execute("SELECT * FROM rides WHERE date BETWEEN '2022-07-01' and '2022-07-30'")
-    actual_month_rides = cur.fetchall()
-    print(all_rides)
-    print(actual_month_rides)
-    rides_pioter = 0
-    rides_karol = 0
+    month_rides = cur.fetchall()
+    all_rides_pioter = 0
+    month_rides_pioter = 0
+    all_rides_karol = 0
+    month_rides_karol = 0
     for ride in all_rides:
         if ride[2] == ride[3]:
             if ride[2] in CARS_KAROL:
-                rides_karol += 1
+                all_rides_karol += 1
             else:
-                rides_pioter += 1
-    return {'rides_karol': rides_karol, 'rides_pioter': rides_pioter}
+                all_rides_pioter += 1
+    for ride in month_rides:
+        if ride[2] == ride[3]:
+            if ride[2] in CARS_KAROL:
+                month_rides_karol += 1
+            else:
+                month_rides_pioter += 1
+    return {'all_rides_karol': all_rides_karol,
+            'all_rides_pioter': all_rides_pioter,
+            'month_rides_karol': month_rides_karol,
+            'month_rides_pioter': month_rides_pioter}
 
 initial_connect()
-check_calendar_day(day='2022-07-02')
-
-
